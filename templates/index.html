@@ -1,0 +1,253 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal — Comment Sentiment Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --bg-panel: #131316;
+    --line: #232328;
+    --text: #e8e6e1;
+    --text-dim: #6f6e72;
+    --signal: #ff3366;
+    --signal-dim: #4d1020;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* faint scanline texture */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      0deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px,
+      transparent 1px, transparent 3px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 560px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--signal);
+    box-shadow: 0 0 8px var(--signal);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  h1 {
+    font-family: 'Archivo Expanded', sans-serif;
+    font-weight: 800;
+    font-size: clamp(40px, 7vw, 60px);
+    line-height: 0.95;
+    letter-spacing: -0.01em;
+    margin-bottom: 12px;
+    animation: fadeUp 0.6s ease 0.08s both;
+  }
+
+  h1 span { color: var(--signal); }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 440px;
+    margin-bottom: 40px;
+    animation: fadeUp 0.6s ease 0.16s both;
+  }
+
+  form {
+    animation: fadeUp 0.6s ease 0.24s both;
+  }
+
+  .field-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .input-row {
+    display: flex;
+    border: 1px solid var(--line);
+    background: var(--bg-panel);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .input-row:focus-within {
+    border-color: var(--signal);
+  }
+
+  .input-row span.prefix {
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    color: var(--text-dim);
+    font-size: 13px;
+    border-right: 1px solid var(--line);
+    background: rgba(255,255,255,0.015);
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    padding: 16px;
+  }
+
+  input::placeholder { color: #3a393e; }
+
+  button {
+    margin-top: 16px;
+    width: 100%;
+    background: var(--signal);
+    color: #0a0a0c;
+    border: none;
+    border-radius: 4px;
+    padding: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  button:hover {
+    box-shadow: 0 0 24px rgba(255, 51, 102, 0.4);
+    transform: translateY(-1px);
+  }
+
+  button:active { transform: translateY(0px); }
+
+  .error {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: var(--signal-dim);
+    border: 1px solid var(--signal);
+    border-radius: 4px;
+    color: #ff8aa8;
+    font-size: 13px;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .footer-meta {
+    margin-top: 40px;
+    display: flex;
+    gap: 24px;
+    font-size: 11px;
+    color: #3a393e;
+    letter-spacing: 0.04em;
+    animation: fadeUp 0.6s ease 0.32s both;
+  }
+
+  .footer-meta span { display: flex; align-items: center; gap: 6px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="eyebrow">
+      <span class="dot"></span>
+      Reading the comment signal
+    </div>
+
+    <h1>What does your<br>audience <span>really</span> think?</h1>
+
+    <p class="subtitle">
+      Paste a video link. We filter the noise, weigh every comment by engagement,
+      and surface what your audience actually praised and criticized.
+    </p>
+
+    <form action="/analyze" method="POST">
+      <label class="field-label" for="video_url">YouTube video URL</label>
+      <div class="input-row">
+        <span class="prefix">youtube.com/watch?v=</span>
+        <input
+          type="text"
+          id="video_url"
+          name="video_url"
+          placeholder="paste full link here"
+          autocomplete="off"
+          required
+        >
+      </div>
+      <button type="submit">Analyze comments →</button>
+
+      {% if error %}
+      <div class="error">⚠ {{ error }}</div>
+      {% endif %}
+    </form>
+
+    <div class="footer-meta">
+      <span>● VADER sentiment</span>
+      <span>● Engagement-weighted</span>
+      <span>● Top 100 comments</span>
+    </div>
+  </div>
+
+</body>
+</html>

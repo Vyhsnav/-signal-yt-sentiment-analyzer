@@ -1,0 +1,389 @@
+<!-- templates/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal — {{ result.video_title }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --bg-panel: #131316;
+    --line: #232328;
+    --text: #e8e6e1;
+    --text-dim: #6f6e72;
+    --signal: #ff3366;
+    --pos: #3dd68c;
+    --neg: #ff3366;
+    --neu: #5a5a60;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    padding: 32px 24px 80px;
+  }
+
+  .wrap { max-width: 920px; margin: 0 auto; }
+
+  /* ── Header ── */
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    margin-bottom: 28px;
+  }
+  .back-link:hover { color: var(--text); }
+
+  .video-title {
+    font-family: 'Archivo Expanded', sans-serif;
+    font-weight: 800;
+    font-size: clamp(22px, 4vw, 32px);
+    line-height: 1.15;
+    margin-bottom: 8px;
+    max-width: 700px;
+  }
+
+  .meta-row {
+    display: flex;
+    gap: 20px;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 40px;
+  }
+
+  /* ── Vibe Score Hero ── */
+  .vibe-panel {
+    border: 1px solid var(--line);
+    background: var(--bg-panel);
+    border-radius: 6px;
+    padding: 32px;
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .vibe-score {
+    font-family: 'Archivo Expanded', sans-serif;
+    font-weight: 800;
+    font-size: 72px;
+    line-height: 1;
+    color: var(--signal);
+  }
+
+  .vibe-score span { font-size: 24px; color: var(--text-dim); font-family: 'JetBrains Mono'; font-weight: 400; }
+
+  .vibe-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .vibe-bar-track {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .bar-bg {
+    height: 8px;
+    background: var(--line);
+    border-radius: 99px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--neg), var(--signal));
+    border-radius: 99px;
+    transition: width 1s ease;
+  }
+
+  .bar-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  /* ── Stats row ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .stat-box {
+    border: 1px solid var(--line);
+    background: var(--bg-panel);
+    border-radius: 6px;
+    padding: 16px 18px;
+  }
+
+  .stat-num { font-size: 24px; font-weight: 700; font-family: 'Archivo Expanded'; }
+  .stat-label { font-size: 11px; color: var(--text-dim); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 4px; }
+
+  /* ── Section ── */
+  .section-title {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  /* ── Two column grid ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+
+  @media (max-width: 700px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    border: 1px solid var(--line);
+    background: var(--bg-panel);
+    border-radius: 6px;
+    padding: 20px;
+  }
+
+  .panel-header {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-header.pos { color: var(--pos); }
+  .panel-header.neg { color: var(--neg); }
+
+  /* ── Keyword chips ── */
+  .keywords {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .keyword {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 99px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--line);
+    color: var(--text);
+  }
+
+  .keyword .count { color: var(--text-dim); margin-left: 4px; }
+
+  /* ── Comment cards ── */
+  .comment-card {
+    border-left: 2px solid var(--line);
+    padding: 10px 0 10px 14px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .comment-card:last-child { margin-bottom: 0; }
+  .comment-card.pos { border-color: var(--pos); }
+  .comment-card.neg { border-color: var(--neg); }
+
+  .comment-likes {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  /* ── Chart panel ── */
+  .chart-panel {
+    border: 1px solid var(--line);
+    background: var(--bg-panel);
+    border-radius: 6px;
+    padding: 24px;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .chart-canvas-wrap { width: 180px; height: 180px; flex-shrink: 0; }
+
+  .legend { display: flex; flex-direction: column; gap: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .empty-note {
+    color: var(--text-dim);
+    font-size: 13px;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a href="/" class="back-link">← analyze another video</a>
+
+  <h1 class="video-title">{{ result.video_title }}</h1>
+  <div class="meta-row">
+    <span>{{ result.total }} comments pulled</span>
+    <span>{{ result.kept }} kept after filtering</span>
+    <span>{{ result.dropped }} filtered as noise</span>
+  </div>
+
+  <!-- Vibe Score -->
+  <div class="vibe-panel">
+    <div>
+      <div class="vibe-label">Audience vibe score</div>
+      <div class="vibe-score">{{ result.vibe_score | round(0) | int }}<span>/100</span></div>
+    </div>
+    <div class="vibe-bar-track">
+      <div class="bar-bg">
+        <div class="bar-fill" style="width: {{ result.vibe_score }}%"></div>
+      </div>
+      <div class="bar-ticks">
+        <span>Hostile</span>
+        <span>Neutral</span>
+        <span>Loved it</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-num" style="color: var(--pos)">{{ result.counts.positive | default(0) }}</div>
+      <div class="stat-label">Positive</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color: var(--neg)">{{ result.counts.negative | default(0) }}</div>
+      <div class="stat-label">Negative</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color: var(--neu)">{{ result.counts.neutral | default(0) }}</div>
+      <div class="stat-label">Neutral</div>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-panel">
+    <div class="chart-canvas-wrap">
+      <canvas id="sentimentChart"></canvas>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-dot" style="background: var(--pos)"></span>Positive — {{ result.counts.positive | default(0) }}</div>
+      <div class="legend-item"><span class="legend-dot" style="background: var(--neg)"></span>Negative — {{ result.counts.negative | default(0) }}</div>
+      <div class="legend-item"><span class="legend-dot" style="background: var(--neu)"></span>Neutral — {{ result.counts.neutral | default(0) }}</div>
+    </div>
+  </div>
+
+  <!-- Keywords -->
+  <div class="section-title">What people are saying</div>
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-header pos">✓ Praised most</div>
+      <div class="keywords">
+        {% for word, count in result.pos_keywords %}
+        <span class="keyword">{{ word }}<span class="count">{{ count }}</span></span>
+        {% else %}
+        <span class="empty-note">Not enough positive comments to extract keywords.</span>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header neg">✕ Criticized most</div>
+      <div class="keywords">
+        {% for word, count in result.neg_keywords %}
+        <span class="keyword">{{ word }}<span class="count">{{ count }}</span></span>
+        {% else %}
+        <span class="empty-note">Not enough negative comments to extract keywords.</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Top comments -->
+  <div class="section-title">Most impactful comments</div>
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-header pos">Top praise</div>
+      {% for c in result.top_positive %}
+      <div class="comment-card pos">
+        {{ c.text }}
+        <div class="comment-likes">♥ {{ c.likes }} likes</div>
+      </div>
+      {% else %}
+      <span class="empty-note">No standout positive comments.</span>
+      {% endfor %}
+    </div>
+    <div class="panel">
+      <div class="panel-header neg">Top criticism</div>
+      {% for c in result.top_negative %}
+      <div class="comment-card neg">
+        {{ c.text }}
+        <div class="comment-likes">♥ {{ c.likes }} likes</div>
+      </div>
+      {% else %}
+      <span class="empty-note">No standout negative comments.</span>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const ctx = document.getElementById('sentimentChart');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Positive', 'Negative', 'Neutral'],
+      datasets: [{
+        data: [
+          {{ result.counts.positive | default(0) }},
+          {{ result.counts.negative | default(0) }},
+          {{ result.counts.neutral | default(0) }}
+        ],
+        backgroundColor: ['#3dd68c', '#ff3366', '#5a5a60'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      cutout: '70%',
+      plugins: { legend: { display: false } }
+    }
+  });
+</script>
+</body>
+</html>
